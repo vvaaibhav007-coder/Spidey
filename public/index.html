@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SpideyWrite — Daily AI Writing Fixer</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <h1>SpideyWrite</h1>
+        <button id="themeToggle">🌙</button>
+      </header>
+
+      <section id="authCard" class="card">
+        <h2>Login</h2>
+        <input id="email" type="email" placeholder="you@example.com" />
+        <div class="row">
+          <button id="requestOtp">Request OTP</button>
+          <input id="otp" placeholder="Enter OTP" />
+          <button id="verifyOtp">Verify</button>
+        </div>
+        <small id="otpHint"></small>
+      </section>
+
+      <section id="mainCard" class="card hidden">
+        <div class="row between">
+          <h2>Workflow</h2>
+          <div id="usage"></div>
+        </div>
+
+        <div class="row wrap">
+          <button class="preset" data-preset="summarize">Summarize</button>
+          <button class="preset" data-preset="explain">Explain</button>
+          <button class="preset" data-preset="transform">Rewrite Better</button>
+          <select id="tone">
+            <option value="neutral">Neutral</option>
+            <option value="professional">Professional</option>
+            <option value="friendly">Friendly</option>
+            <option value="persuasive">Persuasive</option>
+          </select>
+        </div>
+
+        <textarea id="inputText" rows="8" placeholder="Paste rough message, notes, or text..."></textarea>
+
+        <div class="row wrap">
+          <button id="newSession">New Session</button>
+          <button id="runAi">Run Workflow</button>
+          <button id="rerun">Re-run with changes</button>
+          <button id="copyOut">Copy</button>
+          <button id="exportTxt">Export .txt</button>
+          <button id="upgrade">Upgrade</button>
+        </div>
+
+        <div class="output" id="output"></div>
+
+        <div class="row wrap">
+          <button id="thumbUp">👍</button>
+          <button id="thumbDown">👎</button>
+          <button id="viewAnalytics">Analytics</button>
+        </div>
+
+        <details>
+          <summary>History</summary>
+          <ul id="history"></ul>
+        </details>
+
+        <pre id="analytics"></pre>
+      </section>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
