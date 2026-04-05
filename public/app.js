@@ -16,7 +16,7 @@ async function api(path, method = 'GET', body) {
     body: body ? JSON.stringify(body) : undefined,
   });
   const data = await res.json();
-  if (!res.ok) throw data;
+  if (!res.ok) throw new Error(data.error || 'Request failed');
   return data;
 }
 
@@ -83,7 +83,7 @@ $('requestOtp').onclick = async () => {
     const d = await api('/api/auth/request-otp', 'POST', { email: $('email').value });
     $('otpHint').textContent = `Demo OTP: ${d.otpDemo}`;
   } catch (e) {
-    alert(e.error || 'OTP request failed');
+    alert(e.message || 'OTP request failed');
   }
 };
 
@@ -99,7 +99,7 @@ $('verifyOtp').onclick = async () => {
     await loadMe();
     await ensureSession();
   } catch (e) {
-    alert(e.error || 'Verification failed');
+    alert(e.message || 'Verification failed');
   }
 };
 
@@ -130,7 +130,7 @@ $('upgrade').onclick = async () => {
     await loadMe();
     alert('Upgraded to paid tier.');
   } catch (e) {
-    alert(e.error || 'Upgrade failed');
+    alert(e.message || 'Upgrade failed');
   }
 };
 
@@ -168,6 +168,7 @@ $('themeToggle').onclick = () => {
     await loadMe();
     await ensureSession();
   } catch {
+    alert('Session expired. Please log in again.');
     token = '';
     localStorage.removeItem('token');
     showMain(false);

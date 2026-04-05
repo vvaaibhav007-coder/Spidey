@@ -6,6 +6,8 @@ const { buildStructuredOutput, cacheKey } = require('./ai');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const FREE_TIER_LIMIT = 15;
+const PAID_TIER_LIMIT = 1000;
 
 app.use(express.json({ limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -58,7 +60,7 @@ async function bumpUsage(userId) {
 }
 
 function usageLimit(plan) {
-  return plan === 'paid' ? 1000 : 15;
+  return plan === 'paid' ? PAID_TIER_LIMIT : FREE_TIER_LIMIT;
 }
 
 app.get('/api/health', (_, res) => {
@@ -68,8 +70,9 @@ app.get('/api/health', (_, res) => {
 app.post('/api/auth/request-otp', async (req, res) => {
   const email = String(req.body.email || '').trim().toLowerCase();
   if (!email || !email.includes('@')) return res.status(400).json({ error: 'Valid email required' });
-  const otp = String(Math.floor(100000 + Math.random() * 900000));
-  otpStore.set(email, { otp, expiresAt: Date.now() + 5 * 60 * 1000 });
+  const otp = String(crypto.randomInt(100000, 1000000));
+  const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
+  otpStore.set(email, { otpHash, expiresAt: Date.now() + 5 * 60 * 1000 });
   await trackEvent(null, 'otp_requested', { emailDomain: email.split('@')[1] });
   res.json({ ok: true, otpDemo: otp });
 });
@@ -78,7 +81,8 @@ app.post('/api/auth/verify-otp', async (req, res) => {
   const email = String(req.body.email || '').trim().toLowerCase();
   const otp = String(req.body.otp || '').trim();
   const record = otpStore.get(email);
-  if (!record || record.expiresAt < Date.now() || record.otp !== otp) {
+  const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
+  if (!record || record.expiresAt < Date.now() || record.otpHash !== otpHash) {
     return res.status(400).json({ error: 'Invalid OTP' });
   }
 
@@ -171,6 +175,7 @@ app.post('/api/ai/process', requireUser, async (req, res) => {
     });
   }
 
+  // Short-term in-memory user context from recent inputs, used as lightweight personalization hints.
   const memory = memoryStore.get(req.user.id) || [];
   const key = cacheKey({ inputText, mode, tone, level: req.user.level, style: req.user.style });
 
@@ -249,7 +254,7 @@ app.post('/api/integrations/telegram/webhook', async (req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  console.error(err);
+  console.error(`[${nowIso()}]`, err?.message || 'internal_error');
   res.status(500).json({ error: 'Internal server error' });
 });
 

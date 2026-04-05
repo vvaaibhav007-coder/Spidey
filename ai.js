@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const MAX_FALLBACK_SUMMARY_LENGTH = 240;
 
 function normalizeText(text) {
   return (text || '').replace(/\s+/g, ' ').trim();
@@ -12,7 +13,7 @@ function splitSentences(text) {
 
 function summarize(text, maxSentences = 3) {
   const sentences = splitSentences(text);
-  return sentences.slice(0, maxSentences).join(' ') || normalizeText(text).slice(0, 240);
+  return sentences.slice(0, maxSentences).join(' ') || normalizeText(text).slice(0, MAX_FALLBACK_SUMMARY_LENGTH);
 }
 
 function explain(text, level) {
