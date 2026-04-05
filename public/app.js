@@ -167,7 +167,8 @@ $('themeToggle').onclick = () => {
     showMain(true);
     await loadMe();
     await ensureSession();
-  } catch {
+  } catch (err) {
+    console.error(err);
     alert('Session expired. Please log in again.');
     token = '';
     localStorage.removeItem('token');

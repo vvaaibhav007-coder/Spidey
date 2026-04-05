@@ -15,6 +15,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 const authTokens = new Map();
 const otpStore = new Map();
 const memoryStore = new Map();
+const ALLOW_DEMO_OTP = process.env.ALLOW_DEMO_OTP === 'true';
+// NOTE: In-memory stores keep this sample self-contained; use Redis/DB-backed stores for multi-instance production.
 
 function nowIso() {
   return new Date().toISOString();
@@ -74,7 +76,9 @@ app.post('/api/auth/request-otp', async (req, res) => {
   const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
   otpStore.set(email, { otpHash, expiresAt: Date.now() + 5 * 60 * 1000 });
   await trackEvent(null, 'otp_requested', { emailDomain: email.split('@')[1] });
-  res.json({ ok: true, otpDemo: otp });
+  const payload = { ok: true };
+  if (ALLOW_DEMO_OTP) payload.otpDemo = otp;
+  res.json(payload);
 });
 
 app.post('/api/auth/verify-otp', async (req, res) => {
@@ -164,9 +168,10 @@ app.post('/api/ai/process', requireUser, async (req, res) => {
 
   if (!inputText) return res.status(400).json({ error: 'inputText is required' });
 
-  const currentUsage = await bumpUsage(req.user.id);
   const limit = usageLimit(req.user.plan);
-  if (currentUsage > limit) {
+  const currentCountRow = await get('SELECT requests_count FROM usage_counters WHERE user_id = ? AND day = ?', [req.user.id, dayKey()]);
+  const currentCount = currentCountRow?.requests_count || 0;
+  if (currentCount >= limit) {
     await trackEvent(req.user.id, 'usage_limit_hit', { limit });
     return res.status(402).json({
       error: 'Free tier limit reached',
@@ -174,6 +179,7 @@ app.post('/api/ai/process', requireUser, async (req, res) => {
       limit,
     });
   }
+  const currentUsage = await bumpUsage(req.user.id);
 
   // Short-term in-memory user context from recent inputs, used as lightweight personalization hints.
   const memory = memoryStore.get(req.user.id) || [];

@@ -14,6 +14,8 @@ test('AI output is structured', () => {
 
   assert.ok(result.meta);
   assert.ok(result.sections);
+  assert.equal(result.meta.mode, 'summarize');
+  assert.ok(typeof result.sections.summary === 'string' && result.sections.summary.length > 0);
   assert.ok(Array.isArray(result.sections.keyPoints));
   assert.ok(Array.isArray(result.sections.actionItems));
 });
